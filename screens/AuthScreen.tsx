@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   Pressable,
   Platform,
 } from "react-native";
+import * as Location from "expo-location";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
@@ -17,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { CITIES } from "@/types";
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
+import { findNearestCity } from "@/utils/locationUtils";
 
 export default function AuthScreen() {
   const { theme } = useTheme();
@@ -26,6 +28,52 @@ export default function AuthScreen() {
   const [selectedCity, setSelectedCity] = useState("sf");
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(true);
+  const [detectionError, setDetectionError] = useState<string | null>(null);
+
+  useEffect(() => {
+    detectUserLocation();
+  }, []);
+
+  const detectUserLocation = async () => {
+    try {
+      setIsDetectingLocation(true);
+      setDetectionError(null);
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        setDetectionError("Location permission denied");
+        setIsDetectingLocation(false);
+        return;
+      }
+
+      // For web, show helpful message instead of trying to access location
+      if (Platform.OS === "web") {
+        setDetectionError(
+          "Run in Expo Go to automatically detect your city"
+        );
+        setIsDetectingLocation(false);
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      const cityId = findNearestCity(
+        location.coords.latitude,
+        location.coords.longitude
+      );
+      setSelectedCity(cityId);
+      setDetectionError(null);
+    } catch (error) {
+      console.error("Error detecting location:", error);
+      setDetectionError("Could not detect location");
+    } finally {
+      setIsDetectingLocation(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!displayName.trim()) return;
@@ -95,8 +143,26 @@ export default function AuthScreen() {
 
           <View style={styles.inputContainer}>
             <ThemedText type="small" style={styles.label}>
-              Your City
+              Your City {!isDetectingLocation && !detectionError && "✓"}
             </ThemedText>
+
+            {detectionError ? (
+              <View
+                style={[
+                  styles.detectionErrorContainer,
+                  { backgroundColor: theme.backgroundSecondary },
+                ]}
+              >
+                <Feather name="alert-circle" size={16} color={theme.warning} />
+                <ThemedText
+                  type="caption"
+                  style={[styles.detectionErrorText, { color: theme.warning }]}
+                >
+                  {detectionError}
+                </ThemedText>
+              </View>
+            ) : null}
+
             <Pressable
               style={[
                 styles.citySelector,
@@ -106,8 +172,19 @@ export default function AuthScreen() {
                 },
               ]}
               onPress={() => setShowCityPicker(!showCityPicker)}
+              disabled={isDetectingLocation}
             >
-              <ThemedText type="body">{selectedCityName}</ThemedText>
+              <View style={styles.citySelectorContent}>
+                <ThemedText type="body">{selectedCityName}</ThemedText>
+                {isDetectingLocation && (
+                  <Feather
+                    name="map-pin"
+                    size={16}
+                    color={theme.textSecondary}
+                    style={styles.detectingIcon}
+                  />
+                )}
+              </View>
               <Feather
                 name={showCityPicker ? "chevron-up" : "chevron-down"}
                 size={20}
@@ -250,6 +327,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  citySelectorContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
+  detectingIcon: {
+    marginLeft: Spacing.xs,
+  },
+  detectionErrorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.xs,
+    marginBottom: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  detectionErrorText: {
+    flex: 1,
   },
   loginButton: {
     marginTop: Spacing.lg,
