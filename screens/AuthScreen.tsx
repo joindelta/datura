@@ -16,9 +16,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
-import { findNearestCity, getAllCities } from "@/utils/locationUtils";
-
-const ALL_CITIES = getAllCities();
+import { findNearestCity, getMajorCities, searchCities } from "@/utils/locationUtils";
 
 export default function AuthScreen() {
   const { theme } = useTheme();
@@ -31,11 +29,10 @@ export default function AuthScreen() {
   const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [detectionError, setDetectionError] = useState<string | null>(null);
 
+  // Use lazy-loaded cities - starts with major cities, searches all on input
   const filteredCities = citySearch.trim()
-    ? ALL_CITIES.filter((city) =>
-        city.toLowerCase().includes(citySearch.toLowerCase())
-      )
-    : ALL_CITIES;
+    ? searchCities(citySearch)
+    : getMajorCities();
 
   useEffect(() => {
     detectUserLocation();

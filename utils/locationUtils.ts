@@ -73,30 +73,39 @@ export function findNearestCity(latitude: number, longitude: number): string {
   return nearestCity.name;
 }
 
-export function getAllCities(): string[] {
-  if (allCitiesCache) {
-    return allCitiesCache;
+// Get major cities for immediate display
+export function getMajorCities(): string[] {
+  return MAJOR_CITIES_WITH_COORDS.map((city) => city.name).sort();
+}
+
+// Lazy-load all cities when needed (with limit to prevent memory crash)
+export function searchCities(query: string, limit: number = 100): string[] {
+  if (!query.trim()) {
+    // Return major cities if no search
+    return getMajorCities();
   }
 
-  const cities = new Set<string>();
+  if (!allCitiesCache) {
+    // Load all cities on first search
+    const cities = new Set<string>();
+    const countries = Country.getAllCountries();
 
-  // Get countries to include
-  const countries = Country.getAllCountries();
-  
-  // Process each country
-  countries.forEach((country) => {
-    const states = State.getStatesOfCountry(country.isoCode);
-    
-    // Get cities for each state/region
-    states.forEach((state) => {
-      const stateCities = City.getCitiesOfState(country.isoCode, state.isoCode);
-      stateCities.forEach((city) => {
-        cities.add(city.name);
+    countries.forEach((country) => {
+      const states = State.getStatesOfCountry(country.isoCode);
+      states.forEach((state) => {
+        const stateCities = City.getCitiesOfState(country.isoCode, state.isoCode);
+        stateCities.forEach((city) => {
+          cities.add(city.name);
+        });
       });
     });
-  });
 
-  // Convert to sorted array
-  allCitiesCache = Array.from(cities).sort();
-  return allCitiesCache;
+    allCitiesCache = Array.from(cities).sort();
+  }
+
+  // Filter and limit results
+  const searchLower = query.toLowerCase();
+  return allCitiesCache
+    .filter((city) => city.toLowerCase().includes(searchLower))
+    .slice(0, limit);
 }
