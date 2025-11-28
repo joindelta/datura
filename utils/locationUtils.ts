@@ -1,23 +1,25 @@
-import { CITIES } from "@/types";
-
-interface CityCoordinates {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-}
-
-const CITY_COORDINATES: CityCoordinates[] = [
-  { id: "sf", name: "San Francisco", lat: 37.7749, lng: -122.4194 },
-  { id: "nyc", name: "New York", lat: 40.7128, lng: -74.006 },
-  { id: "la", name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
-  { id: "chicago", name: "Chicago", lat: 41.8781, lng: -87.6298 },
-  { id: "seattle", name: "Seattle", lat: 47.6062, lng: -122.3321 },
-  { id: "austin", name: "Austin", lat: 30.2672, lng: -97.7431 },
-  { id: "boston", name: "Boston", lat: 42.3601, lng: -71.0589 },
-  { id: "denver", name: "Denver", lat: 39.7392, lng: -104.9903 },
-  { id: "miami", name: "Miami", lat: 25.7617, lng: -80.1918 },
-  { id: "portland", name: "Portland", lat: 45.5152, lng: -122.6784 },
+// Major world cities with coordinates for location matching
+const MAJOR_CITIES: Array<{ name: string; lat: number; lng: number }> = [
+  { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
+  { name: "New York", lat: 40.7128, lng: -74.006 },
+  { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
+  { name: "Chicago", lat: 41.8781, lng: -87.6298 },
+  { name: "Seattle", lat: 47.6062, lng: -122.3321 },
+  { name: "Austin", lat: 30.2672, lng: -97.7431 },
+  { name: "Boston", lat: 42.3601, lng: -71.0589 },
+  { name: "Denver", lat: 39.7392, lng: -104.9903 },
+  { name: "Miami", lat: 25.7617, lng: -80.1918 },
+  { name: "Portland", lat: 45.5152, lng: -122.6784 },
+  { name: "London", lat: 51.5074, lng: -0.1278 },
+  { name: "Paris", lat: 48.8566, lng: 2.3522 },
+  { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
+  { name: "Sydney", lat: -33.8688, lng: 151.2093 },
+  { name: "Toronto", lat: 43.6532, lng: -79.3832 },
+  { name: "Vancouver", lat: 49.2827, lng: -123.1207 },
+  { name: "Mexico City", lat: 19.4326, lng: -99.1332 },
+  { name: "São Paulo", lat: -23.5505, lng: -46.6333 },
+  { name: "Singapore", lat: 1.3521, lng: 103.8198 },
+  { name: "Hong Kong", lat: 22.3193, lng: 114.1694 },
 ];
 
 function getDistanceFromCoordinates(
@@ -40,7 +42,7 @@ function getDistanceFromCoordinates(
 }
 
 export function findNearestCity(latitude: number, longitude: number): string {
-  let nearestCity = CITY_COORDINATES[0];
+  let nearestCity = MAJOR_CITIES[0];
   let minDistance = getDistanceFromCoordinates(
     latitude,
     longitude,
@@ -48,8 +50,8 @@ export function findNearestCity(latitude: number, longitude: number): string {
     nearestCity.lng
   );
 
-  for (let i = 1; i < CITY_COORDINATES.length; i++) {
-    const city = CITY_COORDINATES[i];
+  for (let i = 1; i < MAJOR_CITIES.length; i++) {
+    const city = MAJOR_CITIES[i];
     const distance = getDistanceFromCoordinates(
       latitude,
       longitude,
@@ -63,5 +65,9 @@ export function findNearestCity(latitude: number, longitude: number): string {
     }
   }
 
-  return nearestCity.id;
+  return nearestCity.name;
+}
+
+export function getAllCities(): string[] {
+  return MAJOR_CITIES.map((city) => city.name);
 }

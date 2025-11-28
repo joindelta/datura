@@ -15,15 +15,16 @@ import { Button } from "@/components/Button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { CITIES } from "@/types";
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
-import { findNearestCity } from "@/utils/locationUtils";
+import { findNearestCity, getAllCities } from "@/utils/locationUtils";
+
+const ALL_CITIES = getAllCities();
 
 export default function AuthScreen() {
   const { theme } = useTheme();
   const { login, biometricAvailable, authenticateWithBiometric } = useAuth();
   const [displayName, setDisplayName] = useState("");
-  const [selectedCity, setSelectedCity] = useState("sf");
+  const [selectedCity, setSelectedCity] = useState("");
   const [citySearch, setCitySearch] = useState("");
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,10 +32,10 @@ export default function AuthScreen() {
   const [detectionError, setDetectionError] = useState<string | null>(null);
 
   const filteredCities = citySearch.trim()
-    ? CITIES.filter((city) =>
-        city.name.toLowerCase().includes(citySearch.toLowerCase())
+    ? ALL_CITIES.filter((city) =>
+        city.toLowerCase().includes(citySearch.toLowerCase())
       )
-    : CITIES;
+    : ALL_CITIES;
 
   useEffect(() => {
     detectUserLocation();
@@ -53,7 +54,6 @@ export default function AuthScreen() {
         return;
       }
 
-      // For web, show helpful message instead of trying to access location
       if (Platform.OS === "web") {
         setDetectionError(
           "Run in Expo Go to automatically detect your city"
@@ -66,12 +66,12 @@ export default function AuthScreen() {
         accuracy: Location.Accuracy.Balanced,
       });
 
-      const cityId = findNearestCity(
+      const cityName = findNearestCity(
         location.coords.latitude,
         location.coords.longitude
       );
-      setSelectedCity(cityId);
-      setCitySearch(CITIES.find((c) => c.id === cityId)?.name || "");
+      setSelectedCity(cityName);
+      setCitySearch(cityName);
       setDetectionError(null);
     } catch (error) {
       console.error("Error detecting location:", error);
@@ -82,7 +82,7 @@ export default function AuthScreen() {
   };
 
   const handleLogin = async () => {
-    if (!displayName.trim()) return;
+    if (!displayName.trim() || !selectedCity.trim()) return;
     
     setIsLoading(true);
     try {
@@ -100,8 +100,6 @@ export default function AuthScreen() {
       setIsLoading(false);
     }
   };
-
-  const selectedCityName = CITIES.find((c) => c.id === selectedCity)?.name || "Select City";
 
   return (
     <ThemedView style={styles.container}>
@@ -216,12 +214,12 @@ export default function AuthScreen() {
                 >
                   {filteredCities.map((city) => (
                     <Pressable
-                      key={city.id}
+                      key={city}
                       style={({ pressed }) => [
                         styles.citySuggestion,
                         {
                           backgroundColor:
-                            selectedCity === city.id
+                            selectedCity === city
                               ? theme.backgroundSecondary
                               : pressed
                                 ? theme.backgroundSecondary
@@ -229,13 +227,13 @@ export default function AuthScreen() {
                         },
                       ]}
                       onPress={() => {
-                        setSelectedCity(city.id);
-                        setCitySearch(city.name);
+                        setSelectedCity(city);
+                        setCitySearch(city);
                         setShowCitySuggestions(false);
                       }}
                     >
-                      <ThemedText type="body">{city.name}</ThemedText>
-                      {selectedCity === city.id ? (
+                      <ThemedText type="body">{city}</ThemedText>
+                      {selectedCity === city ? (
                         <Feather
                           name="check"
                           size={18}
@@ -251,7 +249,7 @@ export default function AuthScreen() {
 
           <Button
             onPress={handleLogin}
-            disabled={!displayName.trim() || isLoading}
+            disabled={!displayName.trim() || !selectedCity.trim() || isLoading}
             style={[styles.loginButton, { backgroundColor: theme.primary }]}
           >
             {isLoading ? "Setting up..." : "Get Started"}

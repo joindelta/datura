@@ -86,11 +86,6 @@ export interface OrgMembership {
   joinedAt: number;
 }
 
-export interface City {
-  id: string;
-  name: string;
-  country: string;
-}
 
 export const AVATAR_COLORS = [
   "#8B7355",
@@ -99,17 +94,4 @@ export const AVATAR_COLORS = [
   "#A67B5B",
   "#9CAF88",
   "#B5838D",
-];
-
-export const CITIES: City[] = [
-  { id: "sf", name: "San Francisco", country: "USA" },
-  { id: "nyc", name: "New York", country: "USA" },
-  { id: "la", name: "Los Angeles", country: "USA" },
-  { id: "chicago", name: "Chicago", country: "USA" },
-  { id: "seattle", name: "Seattle", country: "USA" },
-  { id: "austin", name: "Austin", country: "USA" },
-  { id: "boston", name: "Boston", country: "USA" },
-  { id: "denver", name: "Denver", country: "USA" },
-  { id: "miami", name: "Miami", country: "USA" },
-  { id: "portland", name: "Portland", country: "USA" },
 ];
