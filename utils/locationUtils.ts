@@ -1,5 +1,7 @@
-// Major world cities with coordinates for location matching
-const MAJOR_CITIES: Array<{ name: string; lat: number; lng: number }> = [
+import { Country, State, City } from "country-state-city";
+
+// Major world cities with coordinates for location matching via GPS
+const MAJOR_CITIES_WITH_COORDS: Array<{ name: string; lat: number; lng: number }> = [
   { name: "San Francisco", lat: 37.7749, lng: -122.4194 },
   { name: "New York", lat: 40.7128, lng: -74.006 },
   { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
@@ -22,6 +24,9 @@ const MAJOR_CITIES: Array<{ name: string; lat: number; lng: number }> = [
   { name: "Hong Kong", lat: 22.3193, lng: 114.1694 },
 ];
 
+// Cache for all cities from country-state-city
+let allCitiesCache: string[] | null = null;
+
 function getDistanceFromCoordinates(
   lat1: number,
   lon1: number,
@@ -42,7 +47,7 @@ function getDistanceFromCoordinates(
 }
 
 export function findNearestCity(latitude: number, longitude: number): string {
-  let nearestCity = MAJOR_CITIES[0];
+  let nearestCity = MAJOR_CITIES_WITH_COORDS[0];
   let minDistance = getDistanceFromCoordinates(
     latitude,
     longitude,
@@ -50,8 +55,8 @@ export function findNearestCity(latitude: number, longitude: number): string {
     nearestCity.lng
   );
 
-  for (let i = 1; i < MAJOR_CITIES.length; i++) {
-    const city = MAJOR_CITIES[i];
+  for (let i = 1; i < MAJOR_CITIES_WITH_COORDS.length; i++) {
+    const city = MAJOR_CITIES_WITH_COORDS[i];
     const distance = getDistanceFromCoordinates(
       latitude,
       longitude,
@@ -69,5 +74,29 @@ export function findNearestCity(latitude: number, longitude: number): string {
 }
 
 export function getAllCities(): string[] {
-  return MAJOR_CITIES.map((city) => city.name);
+  if (allCitiesCache) {
+    return allCitiesCache;
+  }
+
+  const cities = new Set<string>();
+
+  // Get countries to include
+  const countries = Country.getAllCountries();
+  
+  // Process each country
+  countries.forEach((country) => {
+    const states = State.getStatesOfCountry(country.isoCode);
+    
+    // Get cities for each state/region
+    states.forEach((state) => {
+      const stateCities = City.getCitiesOfState(country.isoCode, state.isoCode);
+      stateCities.forEach((city) => {
+        cities.add(city.name);
+      });
+    });
+  });
+
+  // Convert to sorted array
+  allCitiesCache = Array.from(cities).sort();
+  return allCitiesCache;
 }
