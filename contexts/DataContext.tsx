@@ -98,9 +98,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }
 
   const refreshPosts = useCallback(async () => {
-    const allPosts = await getPosts();
+    const allPosts = await getPosts(selectedCity);
     setPosts(allPosts);
-  }, []);
+  }, [selectedCity]);
 
   async function createPost(content: string, orgId?: string, orgName?: string): Promise<Post> {
     const post = await createPostStorage(content, selectedCity, orgId, orgName);

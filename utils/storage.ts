@@ -84,11 +84,21 @@ export async function addComrade(comradeUserId: string): Promise<Comrade> {
   return comrade;
 }
 
-export async function getPosts(): Promise<Post[]> {
+export async function getPosts(city?: string): Promise<Post[]> {
   try {
-    const data = await AsyncStorage.getItem(KEYS.POSTS);
-    return data ? JSON.parse(data) : [];
-  } catch {
+    const url = city ? `http://localhost:3000/api/posts?city=${encodeURIComponent(city)}` : 'http://localhost:3000/api/posts';
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Failed to fetch posts');
+    const posts = await response.json();
+    // Transform to match types
+    return posts.map((p: any) => ({
+      ...p,
+      id: p.id.toString(),
+      createdAt: new Date(p.created_at).getTime(),
+      isLiked: false, // TODO: fetch user likes
+    }));
+  } catch (error) {
+    console.error('Error fetching posts:', error);
     return [];
   }
 }
@@ -105,36 +115,44 @@ export async function createPost(
 ): Promise<Post> {
   const user = await getUser();
   if (!user) throw new Error("No user logged in");
-  
-  const posts = await getPosts();
-  const post: Post = {
-    id: generateId(),
-    authorId: user.id,
-    authorName: user.displayName,
-    authorAvatarColor: user.avatarColor,
-    content,
-    city,
-    organizationId,
-    organizationName,
-    isOrgPost: !!organizationId,
-    createdAt: Date.now(),
-    likes: 0,
-    commentCount: 0,
+
+  const response = await fetch('http://localhost:3000/api/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      authorId: user.id,
+      authorName: user.displayName,
+      authorAvatarColor: user.avatarColor,
+      content,
+      city,
+      organizationId,
+      organizationName,
+      isOrgPost: !!organizationId,
+    }),
+  });
+
+  if (!response.ok) throw new Error('Failed to create post');
+
+  const postData = await response.json();
+  return {
+    ...postData,
+    id: postData.id.toString(),
+    createdAt: new Date(postData.created_at).getTime(),
     isLiked: false,
   };
-  posts.unshift(post);
-  await savePosts(posts);
-  return post;
 }
 
 export async function togglePostLike(postId: string): Promise<void> {
-  const posts = await getPosts();
-  const post = posts.find((p) => p.id === postId);
-  if (post) {
-    post.isLiked = !post.isLiked;
-    post.likes += post.isLiked ? 1 : -1;
-    await savePosts(posts);
-  }
+  const user = await getUser();
+  if (!user) throw new Error("No user logged in");
+
+  const response = await fetch(`http://localhost:3000/api/posts/${postId}/like`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId: user.id }),
+  });
+
+  if (!response.ok) throw new Error('Failed to toggle like');
 }
 
 export async function getComments(postId: string): Promise<Comment[]> {
