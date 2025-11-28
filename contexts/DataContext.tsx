@@ -68,7 +68,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [userMemberships, setUserMemberships] = useState<OrgMembership[]>([]);
   const [comrades, setComrades] = useState<Comrade[]>([]);
-  const [selectedCity, setSelectedCityState] = useState<string>("sf");
+  const [selectedCity, setSelectedCityState] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

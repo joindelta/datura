@@ -365,9 +365,13 @@ export async function setBiometricEnabled(enabled: boolean): Promise<void> {
 export async function getSelectedCity(): Promise<string> {
   try {
     const data = await AsyncStorage.getItem(KEYS.SELECTED_CITY);
-    return data || "sf";
+    if (data) return data;
+    
+    // Fallback: get city from user object
+    const user = await getUser();
+    return user?.city || "";
   } catch {
-    return "sf";
+    return "";
   }
 }
 
