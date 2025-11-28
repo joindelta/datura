@@ -7,7 +7,6 @@ import {
   Organization,
   OrgMembership,
   Comrade,
-  CITIES,
 } from "@/types";
 import {
   getPosts,
@@ -200,9 +199,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSelectedCityState(cityId);
   }
 
-  function getCityName(cityId: string): string {
-    const city = CITIES.find((c) => c.id === cityId);
-    return city ? city.name : "Unknown";
+  function getCityName(cityName: string): string {
+    return cityName || "Unknown";
   }
 
   return (

@@ -9,7 +9,6 @@ import { HeaderTitle } from "@/components/HeaderTitle";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "@/navigation/screenOptions";
 import { useData } from "@/contexts/DataContext";
-import { CITIES } from "@/types";
 
 export type FeedStackParamList = {
   Feed: undefined;

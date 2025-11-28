@@ -2,23 +2,19 @@ import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  FlatList,
   Pressable,
   RefreshControl,
   Modal,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
+import { ScreenFlatList } from "@/components/ScreenFlatList";
 import { useTheme } from "@/hooks/useTheme";
 import { useData } from "@/contexts/DataContext";
 import { Spacing, BorderRadius } from "@/constants/theme";
-import { Post, CITIES } from "@/types";
+import { Post } from "@/types";
 import { FeedStackParamList } from "@/navigation/FeedStackNavigator";
 
 function Avatar({ color, size = 40, name }: { color: string; size?: number; name: string }) {
@@ -133,11 +129,7 @@ function PostCard({
 export default function FeedScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<FeedStackParamList>>();
-  const insets = useSafeAreaInsets();
-  const headerHeight = useHeaderHeight();
-  const tabBarHeight = useBottomTabBarHeight();
-  const { posts, selectedCity, setSelectedCity, getCityName, refreshPosts, togglePostLike, isLoading } = useData();
-  const [showCityPicker, setShowCityPicker] = useState(false);
+  const { posts, selectedCity, getCityName, refreshPosts, togglePostLike, isLoading } = useData();
   const [refreshing, setRefreshing] = useState(false);
 
   const filteredPosts = posts.filter((p) => p.city === selectedCity);
@@ -190,76 +182,24 @@ export default function FeedScreen() {
   );
 
   return (
-    <ThemedView style={styles.container}>
-      <FlatList
-        data={filteredPosts}
-        renderItem={renderPost}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listContent,
-          {
-            paddingTop: headerHeight + Spacing.lg,
-            paddingBottom: tabBarHeight + Spacing["5xl"],
-          },
-        ]}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={renderEmpty}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.primary}
-            progressViewOffset={headerHeight}
-          />
-        }
-        showsVerticalScrollIndicator={false}
-      />
-
-      <Modal
-        visible={showCityPicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowCityPicker(false)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setShowCityPicker(false)}
-        >
-          <View
-            style={[
-              styles.cityPickerModal,
-              { backgroundColor: theme.surface, top: headerHeight + Spacing.sm },
-            ]}
-          >
-            {CITIES.map((city) => (
-              <Pressable
-                key={city.id}
-                style={({ pressed }) => [
-                  styles.cityOption,
-                  {
-                    backgroundColor:
-                      selectedCity === city.id
-                        ? theme.backgroundSecondary
-                        : pressed
-                          ? theme.backgroundSecondary
-                          : "transparent",
-                  },
-                ]}
-                onPress={() => {
-                  setSelectedCity(city.id);
-                  setShowCityPicker(false);
-                }}
-              >
-                <ThemedText type="body">{city.name}</ThemedText>
-                {selectedCity === city.id ? (
-                  <Feather name="check" size={18} color={theme.primary} />
-                ) : null}
-              </Pressable>
-            ))}
-          </View>
-        </Pressable>
-      </Modal>
-    </ThemedView>
+    <ScreenFlatList
+      hasTabBar
+      hasHeader
+      data={filteredPosts}
+      renderItem={renderPost}
+      keyExtractor={(item) => item.id}
+      contentContainerStyle={styles.listContent}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ListEmptyComponent={renderEmpty}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={theme.primary}
+        />
+      }
+      showsVerticalScrollIndicator={false}
+    />
   );
 }
 
