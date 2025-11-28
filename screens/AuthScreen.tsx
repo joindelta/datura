@@ -8,7 +8,6 @@ import {
   Platform,
 } from "react-native";
 import * as Location from "expo-location";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -23,13 +22,19 @@ import { findNearestCity } from "@/utils/locationUtils";
 export default function AuthScreen() {
   const { theme } = useTheme();
   const { login, biometricAvailable, authenticateWithBiometric } = useAuth();
-  const insets = useSafeAreaInsets();
   const [displayName, setDisplayName] = useState("");
   const [selectedCity, setSelectedCity] = useState("sf");
-  const [showCityPicker, setShowCityPicker] = useState(false);
+  const [citySearch, setCitySearch] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(true);
   const [detectionError, setDetectionError] = useState<string | null>(null);
+
+  const filteredCities = citySearch.trim()
+    ? CITIES.filter((city) =>
+        city.name.toLowerCase().includes(citySearch.toLowerCase())
+      )
+    : CITIES;
 
   useEffect(() => {
     detectUserLocation();
@@ -66,6 +71,7 @@ export default function AuthScreen() {
         location.coords.longitude
       );
       setSelectedCity(cityId);
+      setCitySearch(CITIES.find((c) => c.id === cityId)?.name || "");
       setDetectionError(null);
     } catch (error) {
       console.error("Error detecting location:", error);
@@ -163,72 +169,84 @@ export default function AuthScreen() {
               </View>
             ) : null}
 
-            <Pressable
-              style={[
-                styles.citySelector,
-                {
-                  backgroundColor: theme.inputBackground,
-                  borderColor: theme.border,
-                },
-              ]}
-              onPress={() => setShowCityPicker(!showCityPicker)}
-              disabled={isDetectingLocation}
-            >
-              <View style={styles.citySelectorContent}>
-                <ThemedText type="body">{selectedCityName}</ThemedText>
-                {isDetectingLocation && (
-                  <Feather
-                    name="map-pin"
-                    size={16}
-                    color={theme.textSecondary}
-                    style={styles.detectingIcon}
-                  />
-                )}
-              </View>
-              <Feather
-                name={showCityPicker ? "chevron-up" : "chevron-down"}
-                size={20}
-                color={theme.textSecondary}
-              />
-            </Pressable>
-
-            {showCityPicker ? (
+            <View style={styles.cityInputWrapper}>
               <View
                 style={[
-                  styles.cityList,
+                  styles.cityInputContainer,
                   {
-                    backgroundColor: theme.surface,
+                    backgroundColor: theme.inputBackground,
                     borderColor: theme.border,
                   },
                 ]}
               >
-                {CITIES.map((city) => (
-                  <Pressable
-                    key={city.id}
-                    style={({ pressed }) => [
-                      styles.cityOption,
-                      {
-                        backgroundColor:
-                          selectedCity === city.id
-                            ? theme.backgroundSecondary
-                            : pressed
-                              ? theme.backgroundSecondary
-                              : "transparent",
-                      },
-                    ]}
-                    onPress={() => {
-                      setSelectedCity(city.id);
-                      setShowCityPicker(false);
-                    }}
-                  >
-                    <ThemedText type="body">{city.name}</ThemedText>
-                    {selectedCity === city.id ? (
-                      <Feather name="check" size={18} color={theme.primary} />
-                    ) : null}
-                  </Pressable>
-                ))}
+                <Feather
+                  name="search"
+                  size={18}
+                  color={theme.textSecondary}
+                  style={styles.searchIcon}
+                />
+                <TextInput
+                  style={[
+                    styles.cityInput,
+                    {
+                      color: theme.text,
+                    },
+                  ]}
+                  placeholder="Search cities..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={citySearch}
+                  onChangeText={(text) => {
+                    setCitySearch(text);
+                    setShowCitySuggestions(true);
+                  }}
+                  onFocus={() => setShowCitySuggestions(true)}
+                  editable={!isDetectingLocation}
+                />
               </View>
-            ) : null}
+
+              {showCitySuggestions && filteredCities.length > 0 ? (
+                <View
+                  style={[
+                    styles.citySuggestions,
+                    {
+                      backgroundColor: theme.surface,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  {filteredCities.map((city) => (
+                    <Pressable
+                      key={city.id}
+                      style={({ pressed }) => [
+                        styles.citySuggestion,
+                        {
+                          backgroundColor:
+                            selectedCity === city.id
+                              ? theme.backgroundSecondary
+                              : pressed
+                                ? theme.backgroundSecondary
+                                : "transparent",
+                        },
+                      ]}
+                      onPress={() => {
+                        setSelectedCity(city.id);
+                        setCitySearch(city.name);
+                        setShowCitySuggestions(false);
+                      }}
+                    >
+                      <ThemedText type="body">{city.name}</ThemedText>
+                      {selectedCity === city.id ? (
+                        <Feather
+                          name="check"
+                          size={18}
+                          color={theme.primary}
+                        />
+                      ) : null}
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+            </View>
           </View>
 
           <Button
@@ -272,6 +290,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing["2xl"],
+    paddingBottom: Spacing["4xl"],
   },
   logoContainer: {
     alignItems: "center",
@@ -306,35 +325,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
   },
-  citySelector: {
+  cityInputWrapper: {
+    position: "relative",
+  },
+  cityInputContainer: {
     height: Spacing.inputHeight,
     borderWidth: 1,
     borderRadius: BorderRadius.xs,
     paddingHorizontal: Spacing.lg,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: Spacing.sm,
   },
-  cityList: {
+  searchIcon: {
+    marginRight: Spacing.xs,
+  },
+  cityInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  citySuggestions: {
     marginTop: Spacing.sm,
     borderWidth: 1,
     borderRadius: BorderRadius.xs,
-    maxHeight: 200,
+    maxHeight: 180,
   },
-  cityOption: {
+  citySuggestion: {
     height: 44,
     paddingHorizontal: Spacing.lg,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  citySelectorContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-  detectingIcon: {
-    marginLeft: Spacing.xs,
   },
   detectionErrorContainer: {
     flexDirection: "row",
