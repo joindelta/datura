@@ -1,25 +1,34 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "Comrade",
+    "slug": "comrade-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "comrade",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.comrade.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Use Face ID to securely unlock Comrade",
+        "NSCameraUsageDescription": "Scan QR codes to add comrades"
+      }
     },
     "android": {
+      "package": "com.comrade.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#fffff0",
+        "foregroundImage": "./assets/images/icon.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "single",
@@ -32,13 +41,25 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff",
+          "backgroundColor": "#fffff0",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#1A1612"
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Comrade to use Face ID for secure authentication"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Comrade to access your camera to scan QR codes"
+        }
+      ]
     ],
     "experiments": {
       "reactCompiler": true

@@ -3,31 +3,39 @@ import {
   KeyboardAwareScrollView,
   KeyboardAwareScrollViewProps,
 } from "react-native-keyboard-controller";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/hooks/useTheme";
-import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { Spacing } from "@/constants/theme";
 import { ScreenScrollView } from "./ScreenScrollView";
+
+interface ScreenKeyboardAwareScrollViewProps extends KeyboardAwareScrollViewProps {
+  hasTabBar?: boolean;
+  hasHeader?: boolean;
+}
 
 export function ScreenKeyboardAwareScrollView({
   children,
   contentContainerStyle,
   style,
   keyboardShouldPersistTaps = "handled",
+  hasTabBar = true,
+  hasHeader = true,
   ...scrollViewProps
-}: KeyboardAwareScrollViewProps) {
+}: ScreenKeyboardAwareScrollViewProps) {
   const { theme } = useTheme();
-  const { paddingTop, paddingBottom, scrollInsetBottom } = useScreenInsets();
+  const insets = useSafeAreaInsets();
 
-  /**
-   * KeyboardAwareScrollView isn't compatible with web (it relies on native APIs), so the code falls back to ScreenScrollView on web to avoid runtime errors.
-   */
+  const paddingTop = hasHeader ? Spacing.xl : insets.top + Spacing.xl;
+  const paddingBottom = hasTabBar ? 88 + Spacing.xl : insets.bottom + Spacing.xl;
+
   if (Platform.OS === "web") {
     return (
       <ScreenScrollView
         style={style}
         contentContainerStyle={contentContainerStyle}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
+        hasTabBar={hasTabBar}
+        hasHeader={hasHeader}
         {...scrollViewProps}
       >
         {children}
@@ -50,7 +58,7 @@ export function ScreenKeyboardAwareScrollView({
         styles.contentContainer,
         contentContainerStyle,
       ]}
-      scrollIndicatorInsets={{ bottom: scrollInsetBottom }}
+      scrollIndicatorInsets={{ bottom: insets.bottom + 16 }}
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       {...scrollViewProps}
     >
